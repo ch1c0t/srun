@@ -1,0 +1,1 @@
+puts "srun is made with Crystal."
