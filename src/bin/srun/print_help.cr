@@ -1,5 +1,17 @@
 HELP_MESSAGE = <<-S
-srun is a CLI made with Crystal.
+srun is a Crystal spec runner, which runs each spec file in its own process.
+
+Running `srun` discovers files matching `spec/**/*_spec.cr` in the current
+directory, and runs each of them using `crystal spec`.
+
+In each run of `srun`, it creates a dedicated directory(in the current working
+directory) using the current directory name and a timestamp(including a unixtime
+and "%Y%m%d_%H%M%S"), inside of which it creates:
+
+- two subdirectories for failing and passing specs, each with files containing the full outputs produced by `crystal spec` runs;
+- the final report of `srun` run(summarizing what specs were run, which ones of them failed and how they failed);
+
+It notes in the final report which specs failed due to the timeout, to see which specs can sporadically expose deadlocks.
 S
 
 def print_help
