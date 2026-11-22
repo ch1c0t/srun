@@ -1,21 +1,29 @@
 require "./srun/*"
 
-VERSION = "0.0.0"
-
-case ARGV.size
-when 1
-  case ARGV[0]
-  when "-v", "version", "--version"
-    puts VERSION
-    exit
-  when "-h", "help", "--help"
-    print_help
-    exit
-  end
-end
-
 require "../srun"
 require "option_parser"
+
+arguments = ARGV.dup
+
+case arguments.first?
+when "help"
+  print_help
+  exit 0
+when "version"
+  puts Srun::VERSION
+  exit 0
+end
+
+mode = case arguments.first?
+       when "specs"
+         arguments.shift
+         "specs"
+       when "scenarios"
+         arguments.shift
+         "scenarios"
+       else
+         Dir.exists?("scen") ? "scenarios" : "specs"
+       end
 
 timeout_seconds = Srun::DEFAULT_TIMEOUT_SECONDS
 if env_timeout = ENV["SRUN_TIMEOUT"]?
@@ -27,9 +35,9 @@ if env_timeout = ENV["SRUN_TIMEOUT"]?
   timeout_seconds = parsed_timeout
 end
 
-OptionParser.parse do |parser|
-  parser.banner = "Usage: srun [--timeout SECONDS]"
-  parser.on("-t SECONDS", "--timeout=SECONDS", "Timeout for each spec (default: #{timeout_seconds}s)") do |value|
+OptionParser.parse(arguments) do |parser|
+  parser.banner = "Usage: srun [specs|scenarios] [--timeout SECONDS]"
+  parser.on("-t SECONDS", "--timeout=SECONDS", "Timeout for each target (default: #{timeout_seconds}s)") do |value|
     parsed_timeout = value.to_i? || 0
     unless parsed_timeout > 0
       STDERR.puts "srun: timeout must be a positive integer number of seconds"
@@ -38,15 +46,26 @@ OptionParser.parse do |parser|
     timeout_seconds = parsed_timeout
   end
   parser.on("-h", "--help", "Show this help") do
-    puts parser
-    exit
+    print_help
+    exit 0
+  end
+  parser.on("-v", "--version", "Show the version") do
+    puts Srun::VERSION
+    exit 0
   end
 end
 
-unless ARGV.empty?
-  STDERR.puts "srun: unexpected arguments: #{ARGV.join(" ")}"
+unless arguments.empty?
+  STDERR.puts "srun: unexpected arguments: #{arguments.join(" ")}"
   STDERR.puts "Try 'srun --help' for usage."
   exit 2
 end
 
-exit Srun::Runner.new(timeout_seconds).run
+runner = case mode
+         when "scenarios"
+           Srun::ScenariosRunner.new(timeout_seconds)
+         else
+           Srun::SpecsRunner.new(timeout_seconds)
+         end
+
+exit runner.run
