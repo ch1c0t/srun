@@ -1,8 +1,12 @@
 require_relative 'helper'
 
 describe 'cli' do
-  it 'prints a help message' do
-    stdout = cli '--help'
-    expect(stdout.first).to start_with 'crystal.cli_project is a CLI made with Crystal.'
+  it 'prints the command overview' do
+    stdout, stderr, status = run_srun('--help', chdir: File.expand_path('..', __dir__))
+
+    expect(status.exitstatus).to eq(0), stderr
+    expect(stdout).to start_with('Usage: srun [specs|scenarios]')
+    expect(stdout).to include('each spec/**/*_spec.cr file')
+    expect(stdout).to include('scen/**/*.scen.cr')
   end
 end
