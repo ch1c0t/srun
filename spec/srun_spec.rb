@@ -19,7 +19,8 @@ describe 'srun execution modes' do
   end
 
   def invocation_lines
-    File.readlines(@fake_crystal_env.fetch('SRUN_FAKE_CRYSTAL_LOG'), chomp: true)
+    path = @fake_crystal_env.fetch('SRUN_FAKE_CRYSTAL_LOG')
+    File.file?(path) ? File.readlines(path, chomp: true) : []
   end
 
   def report_contents
