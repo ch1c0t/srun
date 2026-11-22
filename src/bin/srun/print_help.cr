@@ -1,17 +1,29 @@
 HELP_MESSAGE = <<-S
-srun is a Crystal spec runner, which runs each spec file in its own process.
+Usage: srun [specs|scenarios] [--timeout SECONDS]
 
-Running `srun` discovers files matching `spec/**/*_spec.cr` in the current
-directory, and runs each of them using `crystal spec`.
+With no subcommand, srun runs scenarios when ./scen is a directory;
+otherwise it runs specs.
 
-In each run of `srun`, it creates a dedicated directory(in the current working
-directory) using the current directory name and a timestamp(including a unixtime
-and "%Y%m%d_%H%M%S"), inside of which it creates:
+Commands:
+  specs       Run every spec/**/*_spec.cr file with its own `crystal spec`
+              process. This preserves the default per-file process isolation.
+  scenarios   Run every scen/**/*.scen.cr file with its own `crystal run`
+              process. Each scenario is listed separately in report.txt.
 
-- two subdirectories for failing and passing specs, each with files containing the full outputs produced by `crystal spec` runs;
-- the final report of `srun` run(summarizing what specs were run, which ones of them failed and how they failed);
+Options:
+  -t, --timeout SECONDS  Timeout for each spec or scenario (default: 10s).
+                         SRUN_TIMEOUT sets the same default.
+  -h, --help             Show this help.
+  -v, --version          Show the version.
 
-It notes in the final report which specs failed due to the timeout, to see which specs can sporadically expose deadlocks.
+Each run creates a timestamped directory in the current working directory:
+  passing/   Full output from successful targets.
+  failing/   Full output from failed, timed-out, or unlaunchable targets.
+  report.txt A summary with every discovered target, its result, duration,
+             exit status, and the path to its complete output.
+
+Scenarios are Crystal source files. Run them from the project root so they can
+load the project's shard dependencies and access project-local resources.
 S
 
 def print_help
